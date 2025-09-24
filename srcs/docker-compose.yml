@@ -1,0 +1,107 @@
+services:
+  nginx:
+    build:
+      context: requirements/nginx
+      args:
+        ALPINE_TAG: ${ALPINE_TAG}
+    image: nginx:v1
+    container_name: nginx
+    restart: always
+    depends_on:
+      wordpress:
+        condition: service_healthy
+    environment:
+      DOMAIN: ${DOMAIN}
+    ports:
+      - "443:443"
+    volumes:
+      - wp_files:/var/www/html:ro
+    networks: [intra]
+    pull_policy: never
+
+  wordpress:
+    build:
+      context: requirements/wordpress
+      args:
+        ALPINE_TAG: ${ALPINE_TAG}
+        WP_VERSION: ${WP_VERSION}
+        WPCLI_VERSION: ${WPCLI_VERSION}
+    image: wordpress:v1
+    container_name: wordpress
+    restart: always
+    environment:
+      WP_URL: ${WP_URL}
+      WP_TITLE: ${WP_TITLE}
+      WP_TABLE_PREFIX: ${WP_TABLE_PREFIX}
+      WP_ADMIN_USER: ${WP_ADMIN_USER}
+      WP_ADMIN_EMAIL: ${WP_ADMIN_EMAIL}
+      DB_HOST: mariadb
+      DB_NAME: ${WP_DB_NAME}
+      DB_USER: ${WP_DB_USER}
+    secrets:
+      - wp_db_password
+      - wp_admin_password
+      - wp_user_password
+    healthcheck:
+      test: ["CMD-SHELL", "php-fpm82 -t >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    volumes:
+      - wp_files:/var/www/html
+    networks: [intra]
+    pull_policy: never
+
+  mariadb:
+    build:
+      context: requirements/mariadb
+      args:
+        ALPINE_TAG: ${ALPINE_TAG}
+    image: mariadb:v1
+    container_name: mariadb
+    restart: always
+    environment:
+      WP_DB_NAME: ${WP_DB_NAME}
+      WP_DB_USER: ${WP_DB_USER}
+    secrets:
+      - wp_db_password
+      - mariadb_root_password
+    healthcheck:
+      test: ["CMD-SHELL", "mariadb-admin --protocol=socket --socket=/run/mysqld/mysqld.sock -uroot -p$$(cat /run/secrets/mariadb_root_password) ping --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    volumes:
+      - wp_db:/var/lib/mysql
+    networks: [intra]
+    pull_policy: never
+
+networks:
+  intra:
+    driver: bridge
+
+volumes:
+  wp_db:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/${LOGIN}/data/mariadb
+      o: bind
+  wp_files:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/${LOGIN}/data/wordpress
+      o: bind
+
+secrets:
+  wp_db_password:
+    file: /home/${LOGIN}/data/secrets/wp_db_password
+  mariadb_root_password:
+    file: /home/${LOGIN}/data/secrets/mariadb_root_password
+  wp_admin_password:
+    file: /home/${LOGIN}/data/secrets/wp_admin_password
+  wp_user_password:
+    file: /home/${LOGIN}/data/secrets/wp_user_password

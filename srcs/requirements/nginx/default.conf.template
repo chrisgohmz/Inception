@@ -1,0 +1,31 @@
+server {
+    listen  443 ssl;
+    http2 on;
+    server_name ${DOMAIN};
+
+    ssl_protocols   TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers on;
+    ssl_certificate /etc/nginx/certs/${DOMAIN}.crt;
+    ssl_certificate_key /etc/nginx/certs/${DOMAIN}.key;
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+
+    root   /var/www/html;
+    index  index.php index.html index.htm;
+
+    location / {
+        try_files $uri $uri/ /index.php?$args;
+    }
+
+    location ~ \.php$ {
+        include fastcgi_params;
+        fastcgi_pass wordpress:9000;
+        fastcgi_read_timeout 60s;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+    }
+
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg)$ {
+        expires 7d;
+        access_log off;
+        try_files $uri =404;
+    }
+}

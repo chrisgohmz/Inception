@@ -38,6 +38,7 @@ services:
       DB_HOST: mariadb
       DB_NAME: ${WP_DB_NAME}
       DB_USER: ${WP_DB_USER}
+      USER_EMAIL: ${WP_USER_EMAIL}
     secrets:
       - wp_db_password
       - wp_admin_password

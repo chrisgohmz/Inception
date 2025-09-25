@@ -4,6 +4,7 @@ set -euo pipefail
 : "${DB_HOST:?}"
 : "${DB_NAME:?}"
 : "${DB_USER:?}"
+: "${USER_EMAIL:?}"
 : "${WP_URL:?}"
 : "${WP_TITLE:?}"
 : "${WP_ADMIN_USER:?}"
@@ -54,11 +55,12 @@ if ! wp core is-installed --allow-root; then
     --admin_email="${WP_ADMIN_EMAIL}" \
     --skip-email \
     --allow-root
+fi
 
-    wp user create "${DB_USER}" "${WP_ADMIN_EMAIL/.*/+user@dummy}" \
-    --user_pass="${USER_PASS}" \
-    --role=author \
-    --allow-root || true
+if wp user get "${DB_USER}" --field=ID --allow-root >/dev/null 2>&1; then
+  wp user update "${DB_USER}" --user_pass="${USER_PASS}" --skip-email --allow-root
+else
+  wp user create "${DB_USER}" "${USER_EMAIL}" --role=author --user_pass="${USER_PASS}" --allow-root
 fi
 
 chown -R www-data:www-data /var/www/html

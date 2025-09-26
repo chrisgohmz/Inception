@@ -132,7 +132,7 @@ services:
       - wp_files:/var/www/html
     networks: [intra]
     healthcheck:
-      test: ["CMD-SHELL", "nc -z localhost 21"]
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 21"]
       interval: 10s
       timeout: 5s
       retries: 5

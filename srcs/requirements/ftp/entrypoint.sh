@@ -16,11 +16,9 @@ if ! getent group "${FTP_GID}" > /dev/null 2>&1 && ! getent group "${FTP_USER}" 
     addgroup -S -g "${FTP_GID}" www-data || true
 fi
 if ! id -u "${FTP_USER}" > /dev/null 2>&1; then
-    adduser -S -D -H -u "${FTP_UID}" -G "$(getent group ${FTP_GID} | cut -d: -f1 || echo www-data)" -s /sbin/nologin "${FTP_USER}"
+    adduser -S -D -H -u "${FTP_UID}" -G "$(getent group ${FTP_GID} | cut -d: -f1 || echo www-data)" -h "${SITE_DIR}" -s /sbin/nologin "${FTP_USER}"
 fi
 echo "${FTP_USER}:${FTP_PASS}" | chpasswd
-
-usermod -d "${SITE_DIR}" "${FTP_USER}" || true
 
 mkdir -p "${CONF_DIR}"
 cat > "${CONF_DIR}/vsftpd.conf" << EOF
@@ -33,7 +31,6 @@ local_umask=022
 use_localtime=YES
 chroot_local_user=YES
 allow_writeable_chroot=YES
-user_sub_token=$USER
 local_root=${SITE_DIR}
 userlist_enable=YES
 userlist_deny=NO

@@ -39,10 +39,19 @@ services:
       DB_NAME: ${WP_DB_NAME}
       DB_USER: ${WP_DB_USER}
       USER_EMAIL: ${WP_USER_EMAIL}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      REDIS_DB: ${REDIS_DB}
+    depends_on:
+      mariadb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     secrets:
       - wp_db_password
       - wp_admin_password
       - wp_user_password
+      - redis_password
     healthcheck:
       test: ["CMD-SHELL", "php-fpm82 -t >/dev/null 2>&1 || exit 1"]
       interval: 10s
@@ -78,6 +87,29 @@ services:
       - wp_db:/var/lib/mysql
     networks: [intra]
     pull_policy: never
+  redis:
+    build:
+      context: requirements/redis
+      args:
+        ALPINE_TAG: ${ALPINE_TAG}
+    image: redis:v1
+    container_name: redis
+    restart: always
+    environment:
+      REDIS_PORT: ${REDIS_PORT}
+      REDIS_DB: ${REDIS_DB}
+    secrets:
+      - redis_password
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -h 127.0.0.1 -p ${REDIS_PORT} -a $$(cat /run/secrets/redis_password) ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks: [intra]
+    pull_policy: never
+    volumes:
+      - redis_data:/data
 
 networks:
   intra:
@@ -96,6 +128,12 @@ volumes:
       type: none
       device: /home/${LOGIN}/data/wordpress
       o: bind
+  redis_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/${LOGIN}/data/redis
+      o: bind
 
 secrets:
   wp_db_password:
@@ -106,3 +144,5 @@ secrets:
     file: /home/${LOGIN}/data/secrets/wp_admin_password
   wp_user_password:
     file: /home/${LOGIN}/data/secrets/wp_user_password
+  redis_password:
+    file: /home/${LOGIN}/data/secrets/redis_password

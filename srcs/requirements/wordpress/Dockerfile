@@ -15,7 +15,7 @@ RUN set -eux; \
 RUN apk add --no-cache \
     php82 php82-fpm php82-mysqli php82-json php82-session php82-cli \
     php82-phar php82-iconv php82-curl php82-zip php82-gd php82-tokenizer \
-    php82-mbstring php82-xml php82-dom php82-simplexml php82-openssl \
+    php82-mbstring php82-xml php82-dom php82-simplexml php82-openssl php82-pecl-redis \
     curl bash tar tini mariadb-client ca-certificates \
     && ln -sf /usr/bin/php82 /usr/bin/php
 

@@ -10,10 +10,14 @@ set -euo pipefail
 : "${WP_ADMIN_USER:?}"
 : "${WP_ADMIN_EMAIL:?}"
 : "${WP_TABLE_PREFIX:?wp_}"
+: "${REDIS_HOST:?}"
+: "${REDIS_PORT:=6379}"
+: "${REDIS_DB:=0}"
 
 DB_PASS=$(cat /run/secrets/wp_db_password)
 ADMIN_PASS=$(cat /run/secrets/wp_admin_password)
 USER_PASS=$(cat /run/secrets/wp_user_password)
+REDIS_PASS=$(cat /run/secrets/redis_password)
 
 if [ ! -f index.php ]; then
     echo "[wordpress] populating /var/www/html with WordPress files..."
@@ -64,5 +68,20 @@ else
 fi
 
 chown -R www-data:www-data /var/www/html
+
+if ! wp plugin is-installed redis-cache --allow-root; then
+    wp plugin install redis-cache --activate --allow-root
+elif ! wp plugin is-active redis-cache --allow-root; then
+    wp plugin activate redis-cache --allow-root
+fi
+
+wp config set WP_REDIS_HOST "${REDIS_HOST}" --type=constant --allow-root
+wp config set WP_REDIS_PORT "${REDIS_PORT}" --type=constant --allow-root
+wp config set WP_REDIS_DB "${REDIS_DB}" --type=constant --allow-root
+wp config set WP_REDIS_PASSWORD "${REDIS_PASS}" --type=constant --allow-root
+
+if ! wp redis status --field=status --allow-root 2>/dev/null | grep -qi 'Connected'; then
+    wp redis enable --force --allow-root
+fi
 
 exec "$@"

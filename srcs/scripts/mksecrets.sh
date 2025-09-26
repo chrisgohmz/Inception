@@ -11,6 +11,7 @@ declare -A S=(
     [wp_admin_password]=`openssl rand -base64 12`
     [wp_user_password]=`openssl rand -base64 12`
     [redis_password]=`openssl rand -base64 12`
+    [ftp_password]=`openssl rand -base64 12`
 )
 
 for k in "${!S[@]}"; do

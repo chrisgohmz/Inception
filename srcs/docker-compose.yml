@@ -87,6 +87,7 @@ services:
       - wp_db:/var/lib/mysql
     networks: [intra]
     pull_policy: never
+
   redis:
     build:
       context: requirements/redis
@@ -110,6 +111,33 @@ services:
     pull_policy: never
     volumes:
       - redis_data:/data
+    
+  ftp:
+    build:
+      context: requirements/ftp
+      args:
+        ALPINE_TAG: ${ALPINE_TAG}
+    image: ftp:v1
+    container_name: ftp
+    restart: always
+    environment:
+      FTP_USER: ${FTP_USER}
+      FTP_UID: ${FTP_UID}
+      FTP_GID: ${FTP_GID}
+      FTP_PASV_MIN: ${FTP_PASV_MIN}
+      FTP_PASV_MAX: ${FTP_PASV_MAX}
+    secrets:
+      - ftp_password
+    volumes:
+      - wp_files:/var/www/html
+    networks: [intra]
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 21"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    pull_policy: never
 
 networks:
   intra:
@@ -146,3 +174,5 @@ secrets:
     file: /home/${LOGIN}/data/secrets/wp_user_password
   redis_password:
     file: /home/${LOGIN}/data/secrets/redis_password
+  ftp_password:
+    file: /home/${LOGIN}/data/secrets/ftp_password

@@ -28,4 +28,20 @@ server {
         access_log off;
         try_files $uri =404;
     }
+
+    location ^~ /adminer {
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME /var/www/adminer/index.php;
+        fastcgi_param QUERY_STRING $query_string;
+        fastcgi_pass adminer:9000;
+        fastcgi_read_timeout 60s;
+    }
+
+    location = /resume { return 301 /resume/; }
+
+    location ^~ /resume/ {
+        alias /var/www/static/;
+        index index.html;
+        try_files $uri $uri/ =404;
+    }
 }

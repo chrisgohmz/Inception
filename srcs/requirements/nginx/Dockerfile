@@ -1,7 +1,7 @@
 ARG ALPINE_TAG=3.21
 FROM alpine:${ALPINE_TAG}
 
-RUN apk add --no-cache nginx openssl tini bash gettext
+RUN apk add --no-cache nginx openssl tini bash gettext busybox-extras
 RUN mkdir -p /etc/nginx/certs /run/nginx /var/www/html
 
 COPY default.conf.template /etc/nginx/templates/default.conf.template

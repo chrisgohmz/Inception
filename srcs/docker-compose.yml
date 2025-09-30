@@ -52,10 +52,15 @@ services:
       REDIS_HOST: ${REDIS_HOST}
       REDIS_PORT: ${REDIS_PORT}
       REDIS_DB: ${REDIS_DB}
+      SMTP_HOST: mailpit
+      SMTP_PORT: ${MAILPIT_SMTP_PORT}
+      DOMAIN: ${DOMAIN}
     depends_on:
       mariadb:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      mailpit:
         condition: service_healthy
     secrets:
       - wp_db_password
@@ -171,6 +176,31 @@ services:
         condition: service_healthy
     pull_policy: never
 
+  mailpit:
+    build:
+      context: requirements/mailpit
+      args:
+        ALPINE_TAG: ${ALPINE_TAG}
+        MAILPIT_VERSION: ${MAILPIT_VERSION}
+    image: mailpit:v1
+    container_name: mailpit
+    restart: always
+    environment:
+      MP_HTTP_ADDR: 0.0.0.0:${MAILPIT_HTTP_PORT}
+      MP_SMTP_ADDR: 0.0.0.0:${MAILPIT_SMTP_PORT}
+      MP_DATA_FILE: /data/mailpit.db
+      MP_WEBROOT: /mail/
+    volumes:
+      - mailpit_data:/data
+    networks: [intra]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:${MAILPIT_HTTP_PORT}/mail/ > /dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    pull_policy: never
+
 networks:
   intra:
     driver: bridge
@@ -199,6 +229,12 @@ volumes:
     driver_opts:
       type: none
       device: /home/${LOGIN}/data/static-site
+      o: bind
+  mailpit_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/${LOGIN}/data/mailpit
       o: bind
 
 secrets:

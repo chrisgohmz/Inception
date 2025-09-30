@@ -16,7 +16,7 @@ RUN apk add --no-cache \
     php84 php84-fpm php84-mysqli php84-json php84-session php84-cli php84-ctype\
     php84-phar php84-iconv php84-curl php84-zip php84-gd php84-tokenizer \
     php84-mbstring php84-xml php84-dom php84-simplexml php84-openssl php84-pecl-redis \
-    curl bash tar tini mariadb-client ca-certificates \
+    curl bash tar tini mariadb-client ca-certificates msmtp \
     && ln -sf /usr/bin/php84 /usr/bin/php
 
 RUN sed -i 's|^;*listen = .*|listen = 9000|' ${PHP_INI_DIR}/php-fpm.d/www.conf \

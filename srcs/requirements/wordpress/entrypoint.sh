@@ -13,11 +13,31 @@ set -euo pipefail
 : "${REDIS_HOST:?}"
 : "${REDIS_PORT:=6379}"
 : "${REDIS_DB:=0}"
+: "${SMTP_HOST:=mailpit}"; : "${SMTP_PORT:=1025}"; : "${DOMAIN:?}"
 
 DB_PASS=$(cat /run/secrets/wp_db_password)
 ADMIN_PASS=$(cat /run/secrets/wp_admin_password)
 USER_PASS=$(cat /run/secrets/wp_user_password)
 REDIS_PASS=$(cat /run/secrets/redis_password)
+
+cat > /etc/msmtprc << EOF
+defaults
+account mailpit
+host ${SMTP_HOST}
+port ${SMTP_PORT}
+tls off
+auth off
+syslog on
+from wordpress@${DOMAIN}
+auto_from on
+maildomain ${DOMAIN}
+account default : mailpit
+EOF
+chmod 600 /etc/msmtprc
+
+if ! grep -q '^sendmail_path' /etc/php84/php.ini; then
+    echo 'sendmail_path = "/usr/bin/msmtp -t -i -a mailpit -f wordpress@'${DOMAIN}'"' >> /etc/php84/php.ini
+fi
 
 if [ ! -f index.php ]; then
     echo "[wordpress] populating /var/www/html with WordPress files..."

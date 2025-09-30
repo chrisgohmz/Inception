@@ -17,6 +17,7 @@ dirs:
 	mkdir -p $(DATA_DIR)/wordpress
 	mkdir -p $(DATA_DIR)/redis
 	mkdir -p $(DATA_DIR)/ftp
+	mkdir -p $(DATA_DIR)/mailpit
 
 hosts:
 	@bash -c 'set -a; . "$(ENV_FILE)"; set +a; DOMAIN="$$DOMAIN" bash $(SRC_DIR)/scripts/setup-hosts.sh'

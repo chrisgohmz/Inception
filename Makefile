@@ -26,8 +26,7 @@ secrets:
 	@bash $(SRC_DIR)/scripts/mksecrets.sh
 
 build:
-	$(COMPOSE) build --no-cache
-
+	$(COMPOSE) build --pull
 up:
 	$(COMPOSE) up -d
 
@@ -40,7 +39,8 @@ stop:
 clean:
 	$(COMPOSE) down --volumes --remove-orphans
 
-fclean: clean
-	-docker image rm nginx:v1 wordpress:v1 mariadb:v1 2>/dev/null || true
+fclean:
+	$(COMPOSE) down --volumes --remove-orphans --rmi all
+	
 
 re: fclean all

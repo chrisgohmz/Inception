@@ -34,6 +34,7 @@ maildomain ${DOMAIN}
 account default : mailpit
 EOF
 chmod 600 /etc/msmtprc
+chown www-data:www-data /etc/msmtprc
 
 if ! grep -q '^sendmail_path' /etc/php84/php.ini; then
     echo 'sendmail_path = "/usr/bin/msmtp -t -i -a mailpit -f wordpress@'${DOMAIN}'"' >> /etc/php84/php.ini
